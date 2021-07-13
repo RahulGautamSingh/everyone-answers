@@ -48,23 +48,27 @@ export default function TeacherLogin() {
         return firebase
           .auth()
           .signInWithPopup(provider)
-          .then(async (userInfo) => {
-            let user = userInfo.additionalUserInfo.profile;
-            console.log(user);
-            let id = user.email.replaceAll(".","_")
-            const docRef = db.collection("teachers").doc(id);
+          .then(async (result) => {
+            let teachersRef = db.collection("teachers");
+            let snapshot = await teachersRef.get();
+            let email = result.user.email;
 
-            await docRef.set({
-             name:user.name,
-             email:user.email
+            email = email.replaceAll(".", "_");
+            let flag = false;
+            snapshot.forEach((doc) => {
+              console.log(email, doc.id);
+              if (doc.id === email) {
+                console.log("MATCH");
+                flag = true;
+              }
             });
 
-            history.push("/home");
-           
+            !flag ? history.push("/home") : history.push("/dashboard");
+          })
+          .catch((error) => {
+            //Handle Error
+            console.log(error);
           });
-      })
-      .catch((error) => {
-        //Handle Error
       });
   }
   useEffect(() => {

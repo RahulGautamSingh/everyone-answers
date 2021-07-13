@@ -5,8 +5,16 @@ import { makeStyles } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
 import { Box, Button } from "@material-ui/core";
 import firebase from "firebase";
-import {  db } from "./firebaseConfig";
+import { db } from "./firebaseConfig";
+import { useHistory } from "react-router-dom";
+import LinearProgress from '@material-ui/core/LinearProgress';
+
 const useStyles = makeStyles({
+  root:{
+    marginTop:"60px",
+    width:"80%",
+    marginLeft:"40px"
+},
   container: {
     gap: "20px",
     display: "flex",
@@ -52,7 +60,11 @@ export default function TeacherHomepage() {
   let [userImage, setUserImage] = useState(null);
   let [studentList, setStudentList] = useState("");
   let [error, setError] = useState("");
-  let [submitting,setSubmitting] = useState(false)
+  let [submitting, setSubmitting] = useState(false);
+  let [username,setUsername] = useState(null)
+  const history = useHistory()
+  let [userEmail,setUserEmail] = useState(null)
+  let [loading,setLoading] = useState(true)
   useEffect(() => {
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
@@ -62,6 +74,9 @@ export default function TeacherHomepage() {
         // ...
         console.log(user)
         setUserImage(user.photoURL);
+        setUserEmail(user.email);
+        setUsername(user.displayName);
+        setLoading(false)
       } else {
         // User is signed out
         // ...
@@ -70,8 +85,16 @@ export default function TeacherHomepage() {
     });
   }, []);
   return (
+  
     <React.Fragment>
       <CssBaseline />
+      {loading &&  <div className={classes.root}>
+          <h1>Loading</h1>
+      <LinearProgress />
+      
+    </div>}
+      {!loading &&
+     <Box>
       <Box className={classes.header}>
         <img src={userImage} alt="" className={classes.avatar} />
       </Box>
@@ -96,15 +119,13 @@ export default function TeacherHomepage() {
           <Button
             variant="contained"
             color="primary"
-            onClick={() => {
-                setSubmitting(true)
-                setError("");
-              if (studentList === "") 
-              {
-                  setError("No student in the list.");
-                  setSubmitting(false)
-              }
-              else {
+            onClick={async () => {
+              setSubmitting(true);
+              setError("");
+              if (studentList === "") {
+                setError("No student in the list.");
+                setSubmitting(false);
+              } else {
                 let arr = studentList;
                 if (arr.includes(",")) arr = arr.split(",");
                 else arr = arr.split("\n");
@@ -112,28 +133,43 @@ export default function TeacherHomepage() {
                 arr.forEach((elem, index) => {
                   if (arr.indexOf(elem) !== index) res.push(elem);
                 });
-                if (res.length !== 0)
-                  {
-                      setError(
+                if (res.length !== 0) {
+                  setError(
                     "Duplicate names in the list.Please make sure that each name is unique.List:{" +
                       res.join(",") +
                       "}"
                   );
-                  setSubmitting(false)
-                      }
-                else {
+                  setSubmitting(false);
+                } else {
                   //add names in database
-                  db.collection
-                  setSubmitting(false)
+                 let id = userEmail.replaceAll(".","_")
+                  arr.forEach(async (elem) => {
+                    await db.collection("teachers").doc(id).set({
+                      id:userEmail,
+                      name:username
+                    })
+                    await db
+                      .collection("teachers")
+                      .doc(id)
+                      .collection("session")
+                      .doc(elem)
+                      .set({
+                        answer: ""
+                      });
+                  });
+                  setSubmitting(false);
+                  history.push("/dashboard")
                 }
               }
             }}
           >
             Submit
           </Button>
-{submitting && <Button>Submitting....</Button> }
+          {submitting && <Button>Submitting....</Button>}
         </Box>
       </Container>
+      </Box>
+      }
     </React.Fragment>
   );
 }

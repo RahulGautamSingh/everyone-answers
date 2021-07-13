@@ -5,6 +5,7 @@ import {
   Route,
   
 } from "react-router-dom";
+import Dashboard from "./DashBoard";
 import TeacherHomepage from "./TeacherHomePage";
 import TeacherLogin from './TeacherLoginPage';
 
@@ -14,7 +15,7 @@ export default function App() {
     
         <Switch>
         <Route  path="/home" component={TeacherHomepage}/>
-           
+        <Route  path="/dashboard" component={Dashboard}/>
           <Route exact path="/">
             <TeacherLogin />
           </Route>
