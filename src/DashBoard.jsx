@@ -93,6 +93,7 @@ export default function Dashboard() {
   let [studentList, setStudentList] = useState([]);
   let [loading, setLoading] = useState(true);
   let [ending, setEnding] = useState(false);
+  let [teacherKey, setTeacherKey] = useState(null);
   let history = useHistory();
 
   const handleClickOpen = () => {
@@ -103,6 +104,7 @@ export default function Dashboard() {
     setOpen(false);
   };
   async function endSession() {
+    handleClose();
     setEnding(true);
     let id = userEmail.replaceAll(".", "_");
     deleteInBatch(db.collection("teachers").doc(id).collection("session"));
@@ -137,7 +139,8 @@ export default function Dashboard() {
       throw err;
     }
   };
-// eslint-disable-next-line
+
+  // eslint-disable-next-line
   useEffect(async () => {
     firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
@@ -148,6 +151,12 @@ export default function Dashboard() {
 
         setUserImage(user.photoURL);
         setUserEmail(user.email);
+        let teachersRef = db
+          .collection("teachers")
+          .doc(user.email.replaceAll(".", "_"));
+        let teacher = await teachersRef.get();
+        setTeacherKey(teacher.data().secretId);
+
         const listRef = db
           .collection("teachers")
           .doc(user.email.replaceAll(".", "_"))
@@ -210,7 +219,7 @@ export default function Dashboard() {
           <Box className={classes.header}>
             <img src={userImage} alt="" className={classes.avatar} />
           </Box>
-          <Container maxWidth="lg" className={classes.container}>
+          <Container maxWidth="false" className={classes.container}>
             <Box className={classes.dashboard}>
               <p className={classes.title}>DashBoard</p>
               <Box className={classes.endGrp}>
@@ -226,7 +235,18 @@ export default function Dashboard() {
             </Box>
 
             <p className={classes.para}>
-              Student Link: <a href="https://google.com">https://google.com</a>
+              Student Link:{" "}
+              <a
+                href={
+                  window.location.href.split("/dashboard")[0] +
+                  "/student/" +
+                  teacherKey
+                }
+              >
+                {window.location.href.split("/dashboard")[0] +
+                  "/student/" +
+                  teacherKey}
+              </a>
             </p>
             <Box className={classes.list}>
               {studentList.length !== 0 &&

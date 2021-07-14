@@ -91,7 +91,7 @@ export default function TeacherHomepage() {
     history.push("/");
     handleClose()
   }
- 
+
 
   useEffect(() => {
     firebase.auth().onAuthStateChanged((user) => {
@@ -189,9 +189,12 @@ export default function TeacherHomepage() {
                 } else {
                   //add names in database
                  let id = userEmail.replaceAll(".","_")
+                 let rand = parseInt(Math.random()*1000000000, 10);
+
                  await db.collection("teachers").doc(id).set({
                   id:userEmail,
-                  name:username
+                  name:username,
+                  secretId:rand
                 })
                   arr.forEach(async (elem) => {
                     await db
