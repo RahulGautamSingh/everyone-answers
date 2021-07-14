@@ -59,6 +59,7 @@ const useStyles = makeStyles({
     fontSize: "13px",
   },
 });
+
 export default function TeacherHomepage() {
   const classes = useStyles();
   let [userImage, setUserImage] = useState(null);
@@ -188,11 +189,11 @@ export default function TeacherHomepage() {
                 } else {
                   //add names in database
                  let id = userEmail.replaceAll(".","_")
+                 await db.collection("teachers").doc(id).set({
+                  id:userEmail,
+                  name:username
+                })
                   arr.forEach(async (elem) => {
-                    await db.collection("teachers").doc(id).set({
-                      id:userEmail,
-                      name:username
-                    })
                     await db
                       .collection("teachers")
                       .doc(id)
