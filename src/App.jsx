@@ -6,7 +6,7 @@ import {
   
 } from "react-router-dom";
 import Dashboard from "./DashBoard";
-// import Student from "./Student";
+import Student from "./Student";
 import TeacherHomepage from "./TeacherHomePage";
 import TeacherLogin from './TeacherLoginPage';
 
@@ -15,10 +15,10 @@ export default function App() {
     <Router>
     
         <Switch>
-        {/* <Route  path="/student/:id" component={Student}/> */}
+        <Route  exact path="/student/:id" component={Student}/>
 
-        <Route  path="/home" component={TeacherHomepage}/>
-        <Route  path="/dashboard" component={Dashboard}/>
+        <Route  exact path="/home" component={TeacherHomepage}/>
+        <Route  exact path="/dashboard" component={Dashboard}/>
           <Route exact path="/">
             <TeacherLogin />
           </Route>

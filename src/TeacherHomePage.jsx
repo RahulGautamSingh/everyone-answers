@@ -71,7 +71,7 @@ export default function TeacherHomepage() {
   let [userEmail,setUserEmail] = useState(null)
   let [loading,setLoading] = useState(true)
   const [open, setOpen] = React.useState(false);
-
+ let [callError,setCallError] = useState([false,""])
   
   const handleClickOpen = () => {
     setOpen(true);
@@ -83,17 +83,22 @@ export default function TeacherHomepage() {
   };
   
   function logOut(){
-    firebase.auth().signOut().then(() => {
-      // Sign-out successful.
-    }).catch((error) => {
-      // An error happened.
-    });
-    history.push("/");
-    handleClose()
+    try{
+      firebase.auth().signOut().then(() => {
+        // Sign-out successful.
+      }).catch((error) => {
+        // An error happened.
+      });
+      history.push("/");
+      handleClose()
+    }catch(err){
+      setCallError([true,err])
+
+    }
+   
   }
-
-
-  useEffect(() => {
+async function fetchData(){
+  try{
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         // User is signed in, see docs for a list of available properties
@@ -111,6 +116,14 @@ export default function TeacherHomepage() {
         console.log(null);
       }
     });
+  }catch(error){
+    setCallError([true,error])
+    setLoading(false)
+  }
+ 
+}
+  useEffect(() => {
+   fetchData()
   }, []);
   return (
   
@@ -121,7 +134,7 @@ export default function TeacherHomepage() {
       <LinearProgress />
       
     </div>}
-      {!loading &&
+      {!loading && !callError[0] &&
      <Box>
          <Dialog
             open={open}
@@ -188,26 +201,32 @@ export default function TeacherHomepage() {
                   setSubmitting(false);
                 } else {
                   //add names in database
-                 let id = userEmail.replaceAll(".","_")
-                 let rand = parseInt(Math.random()*1000000000, 10);
-
-                 await db.collection("teachers").doc(id).set({
-                  id:userEmail,
-                  name:username,
-                  secretId:rand
-                })
-                  arr.forEach(async (elem) => {
-                    await db
-                      .collection("teachers")
-                      .doc(id)
-                      .collection("session")
-                      .doc(elem)
-                      .set({
-                        answer: ""
-                      });
-                  });
-                  setSubmitting(false);
-                  history.push("/dashboard")
+                  try{
+                    let id = userEmail.replaceAll(".","_")
+                    let rand = parseInt(Math.random()*1000000000, 10);
+   
+                    await db.collection("teachers").doc(id).set({
+                     id:userEmail,
+                     name:username,
+                     secretId:rand
+                   })
+                     arr.forEach(async (elem) => {
+                       await db
+                         .collection("teachers")
+                         .doc(id)
+                         .collection("session")
+                         .doc(elem)
+                         .set({
+                           answer: ""
+                         });
+                     });
+                     setSubmitting(false);
+                     history.push("/dashboard")
+                  }
+                 catch(error){
+                   setCallError([true,error])
+                   setSubmitting(false)
+                 }
                 }
               }
             }}
@@ -219,6 +238,15 @@ export default function TeacherHomepage() {
       </Container>
       </Box>
       }
+       {!loading && callError[0] && (
+        <Container maxWidth="false" p={10}>
+          <Box m={10} style={{ fontSize: "20px" }}>
+            <p style={{ fontSize: "50px", margin: 0 }}>Error</p>
+            <p>{"Error Code: " + callError[1].code}</p>
+            {"Firebase Error: " + callError[1].message}
+          </Box>
+        </Container>
+      )}
     </React.Fragment>
   );
 }

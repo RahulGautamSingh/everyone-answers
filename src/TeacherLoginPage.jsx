@@ -55,11 +55,12 @@ export default function TeacherLogin() {
 
             email = email.replaceAll(".", "_");
             let flag = false;
-            snapshot.forEach((doc) => {
+            snapshot.forEach(async(doc) => {
               console.log(email, doc.id);
               if (doc.id === email) {
                 console.log("MATCH");
-                flag = true;
+                let studentList = await db.collection("teachers").doc(email).collection("session").get()
+                if(studentList!==undefined) flag = true
               }
             });
 

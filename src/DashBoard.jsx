@@ -95,7 +95,7 @@ export default function Dashboard() {
   let [ending, setEnding] = useState(false);
   let [teacherKey, setTeacherKey] = useState(null);
   let history = useHistory();
-
+let [error,setError] = useState([false,""])
   const handleClickOpen = () => {
     setOpen(true);
   };
@@ -105,12 +105,19 @@ export default function Dashboard() {
   };
   async function endSession() {
     handleClose();
-    setEnding(true);
-    let id = userEmail.replaceAll(".", "_");
-    deleteInBatch(db.collection("teachers").doc(id).collection("session"));
-    await db.collection("teachers").doc(id).delete();
-    setEnding(false);
-    history.push("/home");
+    try{
+      setEnding(true);
+      let id = userEmail.replaceAll(".", "_");
+      deleteInBatch(db.collection("teachers").doc(id).collection("session"));
+      await db.collection("teachers").doc(id).delete();
+      setEnding(false);
+      history.push("/home");
+    }
+    catch(error){
+      setError([true,error])
+      setEnding(false);
+    }
+    
   }
 
   let deleteInBatch = async (query, size = 100) => {
@@ -139,9 +146,8 @@ export default function Dashboard() {
       throw err;
     }
   };
-
-  // eslint-disable-next-line
-  useEffect(async () => {
+async function fetchData(){
+  try{
     firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
         // User is signed in, see docs for a list of available properties
@@ -185,6 +191,16 @@ export default function Dashboard() {
         console.log(null);
       }
     });
+  }catch(error){
+    setError([true,error])
+    setLoading(false);
+    
+  }
+}
+  // eslint-disable-next-line
+  useEffect(async () => {
+    fetchData()
+  
   }, []);
   return (
     <React.Fragment>
@@ -195,7 +211,7 @@ export default function Dashboard() {
           <LinearProgress />
         </div>
       )}
-      {!loading && (
+      {!loading && !error[0] && (
         <Box>
           <Dialog
             open={open}
@@ -283,6 +299,15 @@ export default function Dashboard() {
             </Box>
           </Container>
         </Box>
+      )}
+      {!loading && error[0] && (
+        <Container maxWidth="false" p={10}>
+          <Box m={10} style={{ fontSize: "20px" }}>
+            <p style={{ fontSize: "50px", margin: 0 }}>Error</p>
+            <p>{"Error Code: " + error[1].code}</p>
+            {"Firebase Error: " + error[1].message}
+          </Box>
+        </Container>
       )}
     </React.Fragment>
   );
