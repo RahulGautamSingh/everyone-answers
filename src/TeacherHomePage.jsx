@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect,  useState } from "react";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Container from "@material-ui/core/Container";
 import { makeStyles } from "@material-ui/core/styles";
@@ -8,6 +8,10 @@ import firebase from "firebase";
 import { db } from "./firebaseConfig";
 import { useHistory } from "react-router-dom";
 import LinearProgress from '@material-ui/core/LinearProgress';
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogTitle from "@material-ui/core/DialogTitle";
+
 
 const useStyles = makeStyles({
   root:{
@@ -65,6 +69,29 @@ export default function TeacherHomepage() {
   const history = useHistory()
   let [userEmail,setUserEmail] = useState(null)
   let [loading,setLoading] = useState(true)
+  const [open, setOpen] = React.useState(false);
+
+  
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+   
+    setOpen(false);
+  };
+  
+  function logOut(){
+    firebase.auth().signOut().then(() => {
+      // Sign-out successful.
+    }).catch((error) => {
+      // An error happened.
+    });
+    history.push("/");
+    handleClose()
+  }
+ 
+
   useEffect(() => {
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
@@ -95,7 +122,25 @@ export default function TeacherHomepage() {
     </div>}
       {!loading &&
      <Box>
-      <Box className={classes.header}>
+         <Dialog
+            open={open}
+            onClose={handleClose}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+          >
+            <DialogTitle id="alert-dialog-title">
+              {" Are you sure you want to log out?"}
+            </DialogTitle>
+            <DialogActions>
+              <Button onClick={handleClose} color="primary">
+                Disagree
+              </Button>
+              <Button onClick={logOut} color="primary" autoFocus>
+                Agree
+              </Button>
+            </DialogActions>
+          </Dialog>
+      <Box className={classes.header} onClick={handleClickOpen}>
         <img src={userImage} alt="" className={classes.avatar} />
       </Box>
       <Container maxWidth="sm" className={classes.container}>

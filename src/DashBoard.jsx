@@ -6,16 +6,19 @@ import Container from "@material-ui/core/Container";
 import { makeStyles } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
 import { Box, Button } from "@material-ui/core";
-import LinearProgress from '@material-ui/core/LinearProgress';
-
+import LinearProgress from "@material-ui/core/LinearProgress";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogTitle from "@material-ui/core/DialogTitle";
 import React from "react";
 import { useHistory } from "react-router-dom";
+
 const useStyles = makeStyles({
-   root:{
-       marginTop:"60px",
-       width:"80%",
-       marginLeft:"40px"
-   },
+  root: {
+    marginTop: "60px",
+    width: "80%",
+    marginLeft: "40px",
+  },
   container: {
     margin: 0,
     padding: 10,
@@ -65,59 +68,108 @@ const useStyles = makeStyles({
     margin: 0,
     padding: 0,
   },
-  dashboard:{
-      display:"flex",
-      justifyContent:"space-between",
-      width:"100%",
-      alignItems:"center"
+  dashboard: {
+    display: "flex",
+    justifyContent: "space-between",
+    width: "100%",
+    alignItems: "center",
   },
-  endBtn:{
-      padding:"8px 24px",
-      fontWeight:600,
-      marginRight:"20px"
+  endBtn: {
+    padding: "8px 24px",
+    fontWeight: 600,
+    marginRight: "20px",
   },
-  endGrp:{
-      display:"flex",
-      gap:"10px"
-  }
+  endGrp: {
+    display: "flex",
+    gap: "10px",
+  },
 });
 
 export default function Dashboard() {
   const classes = useStyles();
-
+  const [open, setOpen] = React.useState(false);
   let [userImage, setUserImage] = useState(null);
   let [userEmail, setUserEmail] = useState(null);
   let [studentList, setStudentList] = useState([]);
-  let [loading,setLoading] = useState(true)
-  let [ending,setEnding] = useState(false)
-  let history = useHistory()
+  let [loading, setLoading] = useState(true);
+  let [ending, setEnding] = useState(false);
+  let history = useHistory();
 
-  useEffect(async() => {
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+  async function endSession() {
+    setEnding(true);
+    let id = userEmail.replaceAll(".", "_");
+    deleteInBatch(db.collection("teachers").doc(id).collection("session"));
+    await db.collection("teachers").doc(id).delete();
+    setEnding(false);
+    history.push("/home");
+  }
+
+  let deleteInBatch = async (query, size = 100) => {
+    try {
+      let batch = db.batch();
+
+      //get documents
+      let values = await query.get();
+      if (values.size > 0) {
+        values.forEach((value) => {
+          batch.delete(value.ref);
+        });
+
+        //Delete the documents in bulk
+        batch.commit();
+        if (values.size > 0) {
+          //Recusively call the function again to finish
+          //deleting the rest of documents
+          deleteInBatch(query, size);
+        }
+      } else {
+        //exist function
+        return;
+      }
+    } catch (err) {
+      throw err;
+    }
+  };
+// eslint-disable-next-line
+  useEffect(async () => {
     firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
         // User is signed in, see docs for a list of available properties
         // https://firebase.google.com/docs/reference/js/firebase.User
 
         // ...
-        
+
         setUserImage(user.photoURL);
         setUserEmail(user.email);
         const listRef = db
           .collection("teachers")
-          .doc(user.email.replaceAll(".","_"))
+          .doc(user.email.replaceAll(".", "_"))
           .collection("session");
         const snapshot = await listRef.get();
+
         let arr = [];
         snapshot.forEach((doc) => {
           arr.push(doc.id);
         });
-        arr.sort(function(a, b){
-            if(a < b) { return -1; }
-            if(a> b) { return 1; }
-            return 0;
-        })
+        arr.sort(function (a, b) {
+          if (a < b) {
+            return -1;
+          }
+          if (a > b) {
+            return 1;
+          }
+          return 0;
+        });
+        console.log(arr);
         setStudentList(arr);
-        setLoading(false)
+        setLoading(false);
       } else {
         // User is signed out
         // ...
@@ -128,83 +180,90 @@ export default function Dashboard() {
   return (
     <React.Fragment>
       <CssBaseline />
-      {loading &&  <div className={classes.root}>
+      {loading && (
+        <div className={classes.root}>
           <h1>Loading</h1>
-      <LinearProgress />
-      
-    </div>}
-      {!loading &&
-      <Box>
+          <LinearProgress />
+        </div>
+      )}
+      {!loading && (
+        <Box>
+          <Dialog
+            open={open}
+            onClose={handleClose}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+          >
+            <DialogTitle id="alert-dialog-title">
+              {" Do you wish to end this session?"}
+            </DialogTitle>
+            <DialogActions>
+              <Button onClick={handleClose} color="primary">
+                Disagree
+              </Button>
+              <Button onClick={endSession} color="primary" autoFocus>
+                Agree
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-      
-      <Box className={classes.header}>
-        <img src={userImage} alt="" className={classes.avatar} />
-      </Box>
-      <Container maxWidth="lg" className={classes.container}>
-          <Box className={classes.dashboard}>
-          <p className={classes.title}>DashBoard</p>
-          <Box className={classes.endGrp}>
-             {ending && <p>Ending...</p>}
-          <Button variant="contained" className={classes.endBtn}
-          onClick={
-             async ()=>{
-                 setEnding(true)
-                  let id = userEmail.replaceAll(".","_");
-                  let sessionRef = db.collection("teachers").doc(id).collection("session")
-                  let snapshot = await sessionRef.get()
-                  snapshot.forEach(async(elem)=>{
-                   await  db.collection("teachers").doc(id).collection("session").doc(elem).delete()
-                  })
-                  await db.collection("teachers").doc(id).delete()
-                  setEnding(false)
-                  history.push("/home")
-              }
-          }
-          
-          >END SESSION</Button>
+          <Box className={classes.header}>
+            <img src={userImage} alt="" className={classes.avatar} />
           </Box>
-          </Box>
-        
-        <p className={classes.para}>
-          Student Link: <a href="https://google.com">https://google.com</a>
-        </p>
-        <Box className={classes.list}>
-          {studentList.length !== 0 &&
-            studentList.map((elem) => {
-               
-              const doc = db
-                .collection("teachers")
-                .doc(userEmail)
-                .collection("session")
-                .doc(elem);
-              const currtext = doc.onSnapshot(
-                (docSnapshot) => {
-                  console.log(docSnapshot.data());
-                },
-                (err) => {
-                  console.log(`Encountered error: ${err}`);
-                }
-              );
-              return (
-                <Box className={classes.studentBox}>
-                  <p className={classes.stdName} style={{ color: "blue" }}>
-                    {elem}
-                  </p>
-                  <TextField
-                    id="outlined-multiline-static"
-                    multiline
-                    rows={7}
-                    variant="outlined"
-                    className={classes.form}
-                    value={currtext}
-                  />
-                </Box>
-              );
-            })}
+          <Container maxWidth="lg" className={classes.container}>
+            <Box className={classes.dashboard}>
+              <p className={classes.title}>DashBoard</p>
+              <Box className={classes.endGrp}>
+                {ending && <p>Ending...</p>}
+                <Button
+                  variant="contained"
+                  className={classes.endBtn}
+                  onClick={handleClickOpen}
+                >
+                  END SESSION
+                </Button>
+              </Box>
+            </Box>
+
+            <p className={classes.para}>
+              Student Link: <a href="https://google.com">https://google.com</a>
+            </p>
+            <Box className={classes.list}>
+              {studentList.length !== 0 &&
+                studentList.map((elem) => {
+                  const doc = db
+                    .collection("teachers")
+                    .doc(userEmail)
+                    .collection("session")
+                    .doc(elem);
+                  const currtext = doc.onSnapshot(
+                    (docSnapshot) => {
+                      console.log(docSnapshot.data());
+                    },
+                    (err) => {
+                      console.log(`Encountered error: ${err}`);
+                    }
+                  );
+                  return (
+                    <Box className={classes.studentBox}>
+                      <p className={classes.stdName} style={{ color: "blue" }}>
+                        {elem}
+                      </p>
+                      <TextField
+                        id="outlined-multiline-static"
+                        multiline
+                        rows={7}
+                        variant="outlined"
+                        className={classes.form}
+                        value={currtext}
+                      />
+                    </Box>
+                  );
+                })}
+            </Box>
+          </Container>
         </Box>
-      </Container>
-      </Box>
-      }
+      )}
     </React.Fragment>
   );
 }
