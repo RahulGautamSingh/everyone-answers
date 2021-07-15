@@ -76,13 +76,19 @@ const useStyles = makeStyles({
     alignItems: "center",
   },
   endBtn: {
-    padding: "8px 24px",
+    height:"40px",
     fontWeight: 600,
     marginRight: "20px",
+  },
+  clrBtn:{
+    // padding: "8px 24px",
+    fontWeight: 600,
+   
   },
   endGrp: {
     display: "flex",
     gap: "10px",
+    alignItems:"center"
   },
   displayBox: {
     border: "1.5px solid #3d50b6",
@@ -105,7 +111,7 @@ export default function Dashboard() {
   let [ending, setEnding] = useState(false);
   let [teacherKey, setTeacherKey] = useState(null);
   let [error, setError] = useState([false, ""]);
-
+let [clearing,setClearing] = useState(false)
   const handleClickOpen = () => {
     setOpen(true);
   };
@@ -260,9 +266,40 @@ export default function Dashboard() {
 
           <Container maxWidth={false} className={classes.container}>
             <Box className={classes.dashboard}>
+              <Box style={{display:"flex",alignItems:"center",gap:"10px"}}>
               <p className={classes.title}>DashBoard</p>
+              <Button
+            variant="contained"
+            color="primary"
+            className={classes.clrBtn}
+            onClick={async() => {
+             setClearing(true)
+            
+             try{
+                studentList.forEach(async(elem)=>{
+                  await  db
+                  .collection("teachers")
+                  .doc(userEmail.replaceAll(".", "_"))
+                  .collection("session").doc(elem[0]).set({
+                    answer:""
+                  })
+                
+                })
+                setTimeout(()=>setClearing(false),500)
+
+             }catch(err){
+               setError([true,err])
+               setTimeout(()=>setClearing(false),500)
+             }
+            }}
+          >
+            Clear Answers
+          </Button>
+              </Box>
+              
               <Box className={classes.endGrp}>
-                {ending && <p>Ending...</p>}
+                {ending && <p style={{fontWeight:600}}>Ending...</p>}
+                {clearing && <p style={{fontWeight:600}}>Clearing Answers...</p>}
                 <Button
                   variant="contained"
                   className={classes.endBtn}

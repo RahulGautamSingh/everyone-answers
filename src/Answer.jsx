@@ -3,7 +3,7 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 import Container from "@material-ui/core/Container";
 import { makeStyles } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
-import { Box} from "@material-ui/core";
+import { Box } from "@material-ui/core";
 // import firebase from "firebase";
 import { db } from "./firebaseConfig";
 // import { useHistory } from "react-router-dom";
@@ -36,6 +36,7 @@ const useStyles = makeStyles({
 
   form: {
     width: "100%",
+    marginBottom: 0,
   },
   avatar: {
     width: "40px",
@@ -67,30 +68,49 @@ export default function Answer(props) {
   let [syncing, setSyncing] = useState(false);
   let [loading, setLoading] = useState(true);
   let [callError, setCallError] = useState([false, ""]);
-let [syncComp,setSyncComp] = useState(false)
-async function changeText(text){
-    setSyncing(true)
-    let answerRef = db.collection("teachers").doc(props.teacher.replaceAll(".","_")).collection("session").doc(props.user)
-   try{
-    await answerRef.set({
-      answer:text
-  })
-  setSyncing(false)
-  setSyncComp(true)
-  setTimeout(()=>setSyncComp(false),2000)
-   }catch(err){
-     setCallError([true,err])
-     setSyncing(false)
-     setSyncComp(true)
-  setTimeout(()=>setSyncComp(false),2000)
-   }
-   
-   
-}
+  let [syncComp, setSyncComp] = useState(false);
+  let [currtext, setcurrText] = useState("");
+  async function changeText(text) {
+    setSyncing(true);
+    let answerRef = db
+      .collection("teachers")
+      .doc(props.teacher.replaceAll(".", "_"))
+      .collection("session")
+      .doc(props.user);
+    try {
+      await answerRef.set({
+        answer: text,
+      });
+      setSyncing(false);
+      setSyncComp(true);
+      setTimeout(() => setSyncComp(false), 2000);
+    } catch (err) {
+      setCallError([true, err]);
+      setSyncing(false);
+      setSyncComp(true);
+      setTimeout(() => setSyncComp(false), 2000);
+    }
+  }
+  function clearTextField() {
+    setcurrText("");
+  }
+  async function createConnection() {
+    let answerRef = db
+      .collection("teachers")
+      .doc(props.teacher.replaceAll(".", "_"))
+      .collection("session")
+      .doc(props.user);
+    answerRef.onSnapshot((snapshot) => {
+      console.log(snapshot.data());
+      if (snapshot.data().answer === "") clearTextField();
+    });
+  }
 
   useEffect(() => {
+    createConnection();
     setLoading(false);
-  },[]);
+    // eslint-disable-next-line
+  }, []);
 
   return (
     <React.Fragment>
@@ -116,11 +136,23 @@ async function changeText(text){
             placeholder="Answer here..."
             variant="outlined"
             className={classes.form}
-              onChange={(e) => changeText(e.target.value)}
+            onChange={(e) => {
+              setcurrText(e.target.value);
+              changeText(e.target.value);
+            }}
+            value={currtext}
           />
 
-          {syncing && !syncComp && <span style={{margin:0,padding:0,color:"#3d50b6"}}>Syncing....</span>}
-         {!syncing && syncComp &&  <span style={{margin:0,padding:0,color:"#3d50b6"}}>Sync Complete</span>}
+          {syncing && !syncComp && (
+            <span style={{ margin: 0, padding: 0, color: "#3d50b6" }}>
+              Syncing....
+            </span>
+          )}
+          {!syncing && syncComp && (
+            <span style={{ margin: 0, padding: 0, color: "#3d50b6" }}>
+              Sync Complete
+            </span>
+          )}
         </Container>
       )}
       {!loading && callError[0] && (
