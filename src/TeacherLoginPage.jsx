@@ -54,17 +54,23 @@ export default function TeacherLogin() {
             let email = result.user.email;
 
             email = email.replaceAll(".", "_");
-            let flag = false;
-            snapshot.forEach(async(doc) => {
+            snapshot.forEach(async (doc) => {
               console.log(email, doc.id);
               if (doc.id === email) {
                 console.log("MATCH");
-                let studentList = await db.collection("teachers").doc(email).collection("session").get()
-                if(studentList!==undefined) flag = true
+                let studentList = await db
+                  .collection("teachers")
+                  .doc(email)
+                  .collection("session")
+                  .get();
+                if (studentList!==null && studentList!==undefined && studentList.size > 0) {
+                  console.log("going to dashboard")
+                  history.push("/dashboard");
+                }
               }
             });
 
-            !flag ? history.push("/home") : history.push("/dashboard");
+         history.push("/home") 
           })
           .catch((error) => {
             //Handle Error

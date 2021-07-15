@@ -5,9 +5,10 @@ import { useParams } from "react-router-dom";
 import { db } from "./firebaseConfig";
 import { makeStyles } from "@material-ui/core/styles";
 import LinearProgress from "@material-ui/core/LinearProgress";
-import { Box,Button } from "@material-ui/core";
-import Select from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
+import { Box, Button } from "@material-ui/core";
+import Select from "@material-ui/core/Select";
+import MenuItem from "@material-ui/core/MenuItem";
+import Answer from "./Answer";
 
 const useStyles = makeStyles({
   root: {
@@ -15,20 +16,19 @@ const useStyles = makeStyles({
     width: "80%",
     marginLeft: "40px",
   },
-  container:{
-      marginTop:"50px",
-      display:"flex",
-      flexDirection:"column",
-      gap:"10px"
-
+  container: {
+    marginTop: "50px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
   },
-  title:{
-      fontSize:"30px",
-      margin:0
+  title: {
+    fontSize: "30px",
+    margin: 0,
   },
-  select:{
-      width:"280px"
-  }
+  select: {
+    width: "280px",
+  },
 });
 export default function Student() {
   let params = useParams();
@@ -37,11 +37,13 @@ export default function Student() {
   // eslint-disable-next-line
   let [studentList, setStudentList] = useState([]);
   const classes = useStyles();
-  
-  const [student, setStudent] = React.useState('');
-
+  let [notSelected, setNotSelected] = useState(true);
+  let [student, setStudent] = React.useState("");
+  let [currStudent, setCurrStudent] = useState(null);
+  let [user,setUser] = useState(null)
   const handleChange = (event) => {
     setStudent(event.target.value);
+    setCurrStudent(event.target.value);
   };
   async function fetchList(teacher) {
     console.log(teacher);
@@ -66,6 +68,7 @@ export default function Student() {
       });
       console.log(arr);
       setStudentList(arr);
+      setCurrStudent(arr[0]);
       setLoading(false);
     } catch (error) {
       console.log(error.message, error.code);
@@ -85,6 +88,7 @@ export default function Student() {
         //   console.log(elem.secretId)
         if (elem.data().secretId === id) teacher = elem.data().id;
       });
+      setUser(teacher)
       fetchList(teacher);
     } catch (error) {
       console.log(error.message);
@@ -98,40 +102,43 @@ export default function Student() {
     <React.Fragment>
       <CssBaseline />
 
-      {loading && (
+      {loading && notSelected && (
         <div className={classes.root}>
           <h1>Loading</h1>
           <LinearProgress />
         </div>
       )}
-      {!loading && studentList.length !== 0 && !error[0] && (
+      {!loading && studentList.length !== 0 && !error[0] && notSelected && (
         <Container maxWidth="md" className={classes.container}>
-            <p className={classes.title}>Select Your Name</p>
+          <p className={classes.title}>Select Your Name</p>
 
-            <Select
-         labelId="demo-simple-select-autowidth-label"
-         id="demo-simple-select-autowidth"
-          value={student}
-          onChange={handleChange}
-          className={classes.select}
-          placeholder={studentList[0]}
-          displayEmpty="false"
-          
-          renderValue={()=> studentList[0]}
-        >
-            {
-            studentList.map(elem=>{
-                return <MenuItem value={elem}>{elem}</MenuItem>
-            })
-        }
-          
-        </Select>
-        <Button variant="contained" color="primary" style={{width:"150px",marginTop:"20px"}}>
-  Continue
-</Button>
+          <Select
+            labelId="demo-simple-select-autowidth-label"
+            id="demo-simple-select-autowidth"
+            value={student}
+            onChange={handleChange}
+            className={classes.select}
+            placeholder={studentList[0]}
+            displayEmpty="false"
+            renderValue={() => currStudent}
+          >
+            {studentList.map((elem) => {
+              return <MenuItem value={elem}>{elem}</MenuItem>;
+            })}
+          </Select>
+          <Button
+            variant="contained"
+            color="primary"
+            style={{ width: "150px", marginTop: "20px" }}
+            onClick={() => {
+              setNotSelected(false);
+            }}
+          >
+            Continue
+          </Button>
         </Container>
       )}
-      {!loading && error[0] && (
+      {!loading && error[0] && notSelected && (
         <Container maxWidth="false" p={10}>
           <Box m={10} style={{ fontSize: "20px" }}>
             <p style={{ fontSize: "50px", margin: 0 }}>Error</p>
@@ -140,6 +147,7 @@ export default function Student() {
           </Box>
         </Container>
       )}
+      {!loading && !notSelected && <Answer user={student} teacher={user}/>}
     </React.Fragment>
   );
 }

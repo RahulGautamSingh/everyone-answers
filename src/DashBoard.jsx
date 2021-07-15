@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Container from "@material-ui/core/Container";
 import { makeStyles } from "@material-ui/core/styles";
-import TextField from "@material-ui/core/TextField";
+// import TextField from "@material-ui/core/TextField";
 import { Box, Button } from "@material-ui/core";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import Dialog from "@material-ui/core/Dialog";
@@ -58,7 +58,8 @@ const useStyles = makeStyles({
     flexFlow: "row wrap",
     width: "100%",
     height: "fit-content",
-    gap: "20px",
+    gap: "30px",
+    padding: "20px",
   },
   form: {
     margin: 0,
@@ -83,19 +84,28 @@ const useStyles = makeStyles({
     display: "flex",
     gap: "10px",
   },
+  displayBox: {
+    border: "1.5px solid #3d50b6",
+    borderRadius: "5px",
+    width: "380px",
+    height: "250px",
+    padding: "10px",
+  },
 });
 
 export default function Dashboard() {
   const classes = useStyles();
-  const [open, setOpen] = React.useState(false);
+  const history = useHistory();
+
+  let [open, setOpen] = useState(false);
   let [userImage, setUserImage] = useState(null);
   let [userEmail, setUserEmail] = useState(null);
   let [studentList, setStudentList] = useState([]);
   let [loading, setLoading] = useState(true);
   let [ending, setEnding] = useState(false);
   let [teacherKey, setTeacherKey] = useState(null);
-  let history = useHistory();
-let [error,setError] = useState([false,""])
+  let [error, setError] = useState([false, ""]);
+
   const handleClickOpen = () => {
     setOpen(true);
   };
@@ -103,21 +113,27 @@ let [error,setError] = useState([false,""])
   const handleClose = () => {
     setOpen(false);
   };
+
   async function endSession() {
     handleClose();
-    try{
+    try {
       setEnding(true);
       let id = userEmail.replaceAll(".", "_");
+      //real-time coonnection close
+      const unsub = db.collection('teachers').doc(id).collection("session").onSnapshot(() => {
+      });
+      unsub();
+      //deleting session collection
       deleteInBatch(db.collection("teachers").doc(id).collection("session"));
+      //deleting curr teacher doc
       await db.collection("teachers").doc(id).delete();
+      //finish ending call and move to homepage
       setEnding(false);
       history.push("/home");
-    }
-    catch(error){
-      setError([true,error])
+    } catch (error) {
+      setError([true, error]);
       setEnding(false);
     }
-    
   }
 
   let deleteInBatch = async (query, size = 100) => {
@@ -143,64 +159,69 @@ let [error,setError] = useState([false,""])
         return;
       }
     } catch (err) {
-      throw err;
+      setError([true, error]);
+      setEnding(false);
     }
   };
-async function fetchData(){
-  try{
-    firebase.auth().onAuthStateChanged(async (user) => {
-      if (user) {
-        // User is signed in, see docs for a list of available properties
-        // https://firebase.google.com/docs/reference/js/firebase.User
 
-        // ...
+  async function fetchData() {
+    try {
+      firebase.auth().onAuthStateChanged(async (user) => {
+        if (user) {
+          //get user-image and email
+          setUserImage(user.photoURL);
+          setUserEmail(user.email);
 
-        setUserImage(user.photoURL);
-        setUserEmail(user.email);
-        let teachersRef = db
-          .collection("teachers")
-          .doc(user.email.replaceAll(".", "_"));
-        let teacher = await teachersRef.get();
-        setTeacherKey(teacher.data().secretId);
 
-        const listRef = db
-          .collection("teachers")
-          .doc(user.email.replaceAll(".", "_"))
-          .collection("session");
-        const snapshot = await listRef.get();
+          let teachersRef = db
+            .collection("teachers")
+            .doc(user.email.replaceAll(".", "_"));
+            //get curr teacher doc
+          let teacher = await teachersRef.get();
+          //get  secretId of teacher
+          setTeacherKey(teacher.data().secretId);
+          //see the list of students of curr teacher
+          const listRef = db
+            .collection("teachers")
+            .doc(user.email.replaceAll(".", "_"))
+            .collection("session");
+          listRef.onSnapshot(snapshot=>{
+            let arr = [];
+            snapshot.forEach((doc) => {
+              arr.push([doc.id, doc.data().answer]);
+              
+            });
+            arr.sort(function (a, b) {
+              if (a[0] < b[0]) {
+                return -1;
+              }
+              if (a[0] > b[0]) {
+                return 1;
+              }
+              return 0;
+            });
+  
+            setStudentList(arr);
+          });
 
-        let arr = [];
-        snapshot.forEach((doc) => {
-          arr.push(doc.id);
-        });
-        arr.sort(function (a, b) {
-          if (a < b) {
-            return -1;
-          }
-          if (a > b) {
-            return 1;
-          }
-          return 0;
-        });
-        console.log(arr);
-        setStudentList(arr);
-        setLoading(false);
-      } else {
-        // User is signed out
-        // ...
-        console.log(null);
-      }
-    });
-  }catch(error){
-    setError([true,error])
-    setLoading(false);
-    
+      
+          setLoading(false);
+        } else {
+          // User is signed out
+          // ...
+          console.log(null);
+        }
+      });
+    } catch (err) {
+      setError([true, err]);
+      setLoading(false);
+    }
   }
-}
   // eslint-disable-next-line
   useEffect(async () => {
-    fetchData()
-  
+    fetchData();
+
+    // eslint-disable-next-line
   }, []);
   return (
     <React.Fragment>
@@ -213,6 +234,7 @@ async function fetchData(){
       )}
       {!loading && !error[0] && (
         <Box>
+    
           <Dialog
             open={open}
             onClose={handleClose}
@@ -235,7 +257,8 @@ async function fetchData(){
           <Box className={classes.header}>
             <img src={userImage} alt="" className={classes.avatar} />
           </Box>
-          <Container maxWidth="false" className={classes.container}>
+
+          <Container maxWidth={false} className={classes.container}>
             <Box className={classes.dashboard}>
               <p className={classes.title}>DashBoard</p>
               <Box className={classes.endGrp}>
@@ -264,35 +287,19 @@ async function fetchData(){
                   teacherKey}
               </a>
             </p>
+
             <Box className={classes.list}>
               {studentList.length !== 0 &&
                 studentList.map((elem) => {
-                  const doc = db
-                    .collection("teachers")
-                    .doc(userEmail)
-                    .collection("session")
-                    .doc(elem);
-                  const currtext = doc.onSnapshot(
-                    (docSnapshot) => {
-                      console.log(docSnapshot.data());
-                    },
-                    (err) => {
-                      console.log(`Encountered error: ${err}`);
-                    }
-                  );
                   return (
                     <Box className={classes.studentBox}>
-                      <p className={classes.stdName} style={{ color: "blue" }}>
-                        {elem}
+                      <p
+                        className={classes.stdName}
+                        style={{ color: "#3d50b6" }}
+                      >
+                        {elem[0]}
                       </p>
-                      <TextField
-                        id="outlined-multiline-static"
-                        multiline
-                        rows={7}
-                        variant="outlined"
-                        className={classes.form}
-                        value={currtext}
-                      />
+                      <Box className={classes.displayBox}>{elem[1]}</Box>
                     </Box>
                   );
                 })}
