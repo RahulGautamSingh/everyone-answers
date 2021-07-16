@@ -68,7 +68,7 @@ export default function TeacherHomepage() {
   let [submitting, setSubmitting] = useState(false);
   let [username,setUsername] = useState(null)
   const history = useHistory()
-  let [userEmail,setUserEmail] = useState(null)
+  let [userUid,setUserUid] = useState(null)
   let [loading,setLoading] = useState(true)
   const [open, setOpen] = React.useState(false);
  let [callError,setCallError] = useState([false,""])
@@ -107,7 +107,7 @@ async function fetchData(){
         // ...
         console.log(user)
         setUserImage(user.photoURL);
-        setUserEmail(user.email);
+        setUserUid(user.uid);
         setUsername(user.displayName);
         setLoading(false)
       } else {
@@ -202,11 +202,11 @@ async function fetchData(){
                 } else {
                   //add names in database
                   try{
-                    let id = userEmail.replaceAll(".","_")
+                    let id = userUid
                     let rand = parseInt(Math.random()*1000000000, 10);
    
                     await db.collection("teachers").doc(id).set({
-                     id:userEmail,
+                     id:userUid,
                      name:username,
                      secretId:rand
                    })

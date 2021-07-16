@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
@@ -40,6 +40,7 @@ const useStyles = makeStyles({
 export default function TeacherLogin() {
   const classes = useStyles();
   const history = useHistory();
+  let [error,setError] = useState([false,{}])
   function onSignIn() {
     firebase
       .auth()
@@ -51,16 +52,16 @@ export default function TeacherLogin() {
           .then(async (result) => {
             let teachersRef = db.collection("teachers");
             let snapshot = await teachersRef.get();
-            let email = result.user.email;
+            let uid = result.user.uid;
 
-            email = email.replaceAll(".", "_");
+            // email = email.replaceAll(".", "_");
             snapshot.forEach(async (doc) => {
-              console.log(email, doc.id);
-              if (doc.id === email) {
+              console.log(uid, doc.id);
+              if (doc.id === uid) {
                 console.log("MATCH");
                 let studentList = await db
                   .collection("teachers")
-                  .doc(email)
+                  .doc(uid)
                   .collection("session")
                   .get();
                 if (studentList!==null && studentList!==undefined && studentList.size > 0) {
@@ -72,9 +73,10 @@ export default function TeacherLogin() {
 
          history.push("/home") 
           })
-          .catch((error) => {
+          .catch((err) => {
             //Handle Error
-            console.log(error);
+            setError([true,err])
+            
           });
       });
   }
@@ -84,6 +86,7 @@ export default function TeacherLogin() {
   return (
     <React.Fragment>
       <CssBaseline />
+    {!error[0] &&   
       <Container maxWidth="sm" className={classes.container}>
         <p className={classes.title}>Everyone Answers</p>
         <p className={classes.para}>Welcome, Please sign in </p>
@@ -100,6 +103,16 @@ export default function TeacherLogin() {
           SIGN IN WITH GOOGLE
         </Button>
       </Container>
+}
+      {error[0] && (
+        <Container maxWidth={false} p={10}>
+          <Box m={10} style={{ fontSize: "20px" }}>
+            <p style={{ fontSize: "50px", margin: 0 }}>Error</p>
+            <p>{"Error Code: " + error[1].code}</p>
+            {"Firebase Error: " + error[1].message}
+          </Box>
+        </Container>
+      )}
     </React.Fragment>
   );
 }

@@ -105,7 +105,7 @@ export default function Dashboard() {
 
   let [open, setOpen] = useState(false);
   let [userImage, setUserImage] = useState(null);
-  let [userEmail, setUserEmail] = useState(null);
+  let [userUid, setUserUid] = useState(null);
   let [studentList, setStudentList] = useState([]);
   let [loading, setLoading] = useState(true);
   let [ending, setEnding] = useState(false);
@@ -124,7 +124,7 @@ let [clearing,setClearing] = useState(false)
     handleClose();
     try {
       setEnding(true);
-      let id = userEmail.replaceAll(".", "_");
+      let id = userUid
       //real-time coonnection close
       const unsub = db.collection('teachers').doc(id).collection("session").onSnapshot(() => {
       });
@@ -176,12 +176,12 @@ let [clearing,setClearing] = useState(false)
         if (user) {
           //get user-image and email
           setUserImage(user.photoURL);
-          setUserEmail(user.email);
+          setUserUid(user.uid);
 
 
           let teachersRef = db
             .collection("teachers")
-            .doc(user.email.replaceAll(".", "_"));
+            .doc(user.uid);
             //get curr teacher doc
           let teacher = await teachersRef.get();
           //get  secretId of teacher
@@ -189,7 +189,7 @@ let [clearing,setClearing] = useState(false)
           //see the list of students of curr teacher
           const listRef = db
             .collection("teachers")
-            .doc(user.email.replaceAll(".", "_"))
+            .doc(user.uid)
             .collection("session");
           listRef.onSnapshot(snapshot=>{
             let arr = [];
@@ -279,7 +279,7 @@ let [clearing,setClearing] = useState(false)
                 studentList.forEach(async(elem)=>{
                   await  db
                   .collection("teachers")
-                  .doc(userEmail.replaceAll(".", "_"))
+                  .doc(userUid)
                   .collection("session").doc(elem[0]).set({
                     answer:""
                   })

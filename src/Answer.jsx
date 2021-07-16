@@ -74,7 +74,7 @@ export default function Answer(props) {
     setSyncing(true);
     let answerRef = db
       .collection("teachers")
-      .doc(props.teacher.replaceAll(".", "_"))
+      .doc(props.teacher)
       .collection("session")
       .doc(props.user);
     try {
@@ -97,7 +97,7 @@ export default function Answer(props) {
   async function createConnection() {
     let answerRef = db
       .collection("teachers")
-      .doc(props.teacher.replaceAll(".", "_"))
+      .doc(props.teacher)
       .collection("session")
       .doc(props.user);
     answerRef.onSnapshot((snapshot) => {

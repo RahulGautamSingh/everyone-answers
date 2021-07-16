@@ -50,7 +50,7 @@ export default function Student() {
     try {
       let teacherRef = db
         .collection("teachers")
-        .doc(teacher.replaceAll(".", "_"))
+        .doc(teacher)
         .collection("session");
       let list = await teacherRef.get();
       let arr = [];
@@ -86,7 +86,7 @@ export default function Student() {
       let teacher = "";
       teachers.forEach((elem) => {
         //   console.log(elem.secretId)
-        if (elem.data().secretId === id) teacher = elem.data().id;
+        if (elem.data().secretId === id) teacher = elem.id;
       });
       setUser(teacher)
       fetchList(teacher);
