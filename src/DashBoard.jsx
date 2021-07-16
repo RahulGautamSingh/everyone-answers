@@ -76,19 +76,18 @@ const useStyles = makeStyles({
     alignItems: "center",
   },
   endBtn: {
-    height:"40px",
+    height: "40px",
     fontWeight: 600,
     marginRight: "20px",
   },
-  clrBtn:{
+  clrBtn: {
     // padding: "8px 24px",
     fontWeight: 600,
-   
   },
   endGrp: {
     display: "flex",
     gap: "10px",
-    alignItems:"center"
+    alignItems: "center",
   },
   displayBox: {
     border: "1.5px solid #3d50b6",
@@ -111,7 +110,15 @@ export default function Dashboard() {
   let [ending, setEnding] = useState(false);
   let [teacherKey, setTeacherKey] = useState(null);
   let [error, setError] = useState([false, ""]);
-let [clearing,setClearing] = useState(false)
+  let [clearing, setClearing] = useState(false);
+  let [logOpen, setLogOpen] = useState(false);
+  const handleOpenLog = () => {
+    setLogOpen(true);
+  };
+
+  const handleCloseLog = () => {
+    setLogOpen(false);
+  };
   const handleClickOpen = () => {
     setOpen(true);
   };
@@ -119,15 +126,35 @@ let [clearing,setClearing] = useState(false)
   const handleClose = () => {
     setOpen(false);
   };
-
+  function logOut() {
+    try {
+      endSession();
+      firebase
+        .auth()
+        .signOut()
+        .then(() => {
+          // Sign-out successful.
+        })
+        .catch((error) => {
+          // An error happened.
+        });
+      history.push("/");
+    } catch (err) {
+      setError([true, err]);
+    }
+  }
   async function endSession() {
     handleClose();
+    handleCloseLog();
     try {
       setEnding(true);
-      let id = userUid
+      let id = userUid;
       //real-time coonnection close
-      const unsub = db.collection('teachers').doc(id).collection("session").onSnapshot(() => {
-      });
+      const unsub = db
+        .collection("teachers")
+        .doc(id)
+        .collection("session")
+        .onSnapshot(() => {});
       unsub();
       //deleting session collection
       deleteInBatch(db.collection("teachers").doc(id).collection("session"));
@@ -178,11 +205,8 @@ let [clearing,setClearing] = useState(false)
           setUserImage(user.photoURL);
           setUserUid(user.uid);
 
-
-          let teachersRef = db
-            .collection("teachers")
-            .doc(user.uid);
-            //get curr teacher doc
+          let teachersRef = db.collection("teachers").doc(user.uid);
+          //get curr teacher doc
           let teacher = await teachersRef.get();
           //get  secretId of teacher
           setTeacherKey(teacher.data().secretId);
@@ -191,11 +215,10 @@ let [clearing,setClearing] = useState(false)
             .collection("teachers")
             .doc(user.uid)
             .collection("session");
-          listRef.onSnapshot(snapshot=>{
+          listRef.onSnapshot((snapshot) => {
             let arr = [];
             snapshot.forEach((doc) => {
               arr.push([doc.id, doc.data().answer]);
-              
             });
             arr.sort(function (a, b) {
               if (a[0] < b[0]) {
@@ -206,11 +229,10 @@ let [clearing,setClearing] = useState(false)
               }
               return 0;
             });
-  
+
             setStudentList(arr);
           });
 
-      
           setLoading(false);
         } else {
           // User is signed out
@@ -240,7 +262,6 @@ let [clearing,setClearing] = useState(false)
       )}
       {!loading && !error[0] && (
         <Box>
-    
           <Dialog
             open={open}
             onClose={handleClose}
@@ -259,47 +280,69 @@ let [clearing,setClearing] = useState(false)
               </Button>
             </DialogActions>
           </Dialog>
+          <Dialog
+            open={logOpen}
+            onClose={handleCloseLog}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+          >
+            <DialogTitle id="alert-dialog-title">
+              {" Do you wish to logout?"}
+            </DialogTitle>
+            <DialogActions>
+              <Button onClick={handleClose} color="primary">
+                Disagree
+              </Button>
+              <Button onClick={logOut} color="primary" autoFocus>
+                Agree
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-          <Box className={classes.header}>
+          <Box className={classes.header} onClick={handleOpenLog}>
             <img src={userImage} alt="" className={classes.avatar} />
           </Box>
 
           <Container maxWidth={false} className={classes.container}>
             <Box className={classes.dashboard}>
-              <Box style={{display:"flex",alignItems:"center",gap:"10px"}}>
-              <p className={classes.title}>DashBoard</p>
-              <Button
-            variant="contained"
-            color="primary"
-            className={classes.clrBtn}
-            onClick={async() => {
-             setClearing(true)
-            
-             try{
-                studentList.forEach(async(elem)=>{
-                  await  db
-                  .collection("teachers")
-                  .doc(userUid)
-                  .collection("session").doc(elem[0]).set({
-                    answer:""
-                  })
-                
-                })
-                setTimeout(()=>setClearing(false),500)
+              <Box
+                style={{ display: "flex", alignItems: "center", gap: "10px" }}
+              >
+                <p className={classes.title}>DashBoard</p>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className={classes.clrBtn}
+                  onClick={async () => {
+                    setClearing(true);
 
-             }catch(err){
-               setError([true,err])
-               setTimeout(()=>setClearing(false),500)
-             }
-            }}
-          >
-            Clear Answers
-          </Button>
+                    try {
+                      studentList.forEach(async (elem) => {
+                        await db
+                          .collection("teachers")
+                          .doc(userUid)
+                          .collection("session")
+                          .doc(elem[0])
+                          .set({
+                            answer: "",
+                          });
+                      });
+                      setTimeout(() => setClearing(false), 500);
+                    } catch (err) {
+                      setError([true, err]);
+                      setTimeout(() => setClearing(false), 500);
+                    }
+                  }}
+                >
+                  Clear Answers
+                </Button>
               </Box>
-              
+
               <Box className={classes.endGrp}>
-                {ending && <p style={{fontWeight:600}}>Ending...</p>}
-                {clearing && <p style={{fontWeight:600}}>Clearing Answers...</p>}
+                {ending && <p style={{ fontWeight: 600 }}>Ending...</p>}
+                {clearing && (
+                  <p style={{ fontWeight: 600 }}>Clearing Answers...</p>
+                )}
                 <Button
                   variant="contained"
                   className={classes.endBtn}
