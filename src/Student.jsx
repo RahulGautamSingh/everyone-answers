@@ -42,6 +42,7 @@ export default function Student() {
   let [currStudent, setCurrStudent] = useState(null);
   let [user,setUser] = useState(null)
   const handleChange = (event) => {
+    console.log(event.target.value)
     setStudent(event.target.value);
     setCurrStudent(event.target.value);
   };

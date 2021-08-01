@@ -40,7 +40,7 @@ const useStyles = makeStyles({
 export default function TeacherLogin() {
   const classes = useStyles();
   const history = useHistory();
-  let [error,setError] = useState([false,{}])
+  let [error, setError] = useState([false, {}]);
   function onSignIn() {
     firebase
       .auth()
@@ -53,30 +53,20 @@ export default function TeacherLogin() {
             let teachersRef = db.collection("teachers");
             let snapshot = await teachersRef.get();
             let uid = result.user.uid;
-
-            // email = email.replaceAll(".", "_");
-            snapshot.forEach(async (doc) => {
-              console.log(uid, doc.id);
+            for (let doc of snapshot.docs) {
               if (doc.id === uid) {
                 console.log("MATCH");
-                let studentList = await db
-                  .collection("teachers")
-                  .doc(uid)
-                  .collection("session")
-                  .get();
-                if (studentList!==null && studentList!==undefined && studentList.size > 0) {
-                  console.log("going to dashboard")
-                  history.push("/dashboard");
-                }
-              }
-            });
 
-         history.push("/home") 
+                history.push("/dashboard");
+                return;
+              }
+            }
+
+            history.push("/home");
           })
           .catch((err) => {
             //Handle Error
-            setError([true,err])
-            
+            setError([true, err]);
           });
       });
   }
@@ -86,24 +76,24 @@ export default function TeacherLogin() {
   return (
     <React.Fragment>
       <CssBaseline />
-    {!error[0] &&   
-      <Container maxWidth="sm" className={classes.container}>
-        <p className={classes.title}>Everyone Answers</p>
-        <p className={classes.para}>Welcome, Please sign in </p>
-        <Box>
-          <AccountCircleIcon color="disabled" style={{ fontSize: 150 }} />
-        </Box>
+      {!error[0] && (
+        <Container maxWidth="sm" className={classes.container}>
+          <p className={classes.title}>Everyone Answers</p>
+          <p className={classes.para}>Welcome, Please sign in </p>
+          <Box>
+            <AccountCircleIcon color="disabled" style={{ fontSize: 150 }} />
+          </Box>
 
-        <Button
-          onClick={onSignIn}
-          className={classes.signInBtn}
-          variant="contained"
-        >
-          <img src={google} alt="" className={classes.logo} />
-          SIGN IN WITH GOOGLE
-        </Button>
-      </Container>
-}
+          <Button
+            onClick={onSignIn}
+            className={classes.signInBtn}
+            variant="contained"
+          >
+            <img src={google} alt="" className={classes.logo} />
+            SIGN IN WITH GOOGLE
+          </Button>
+        </Container>
+      )}
       {error[0] && (
         <Container maxWidth={false} p={10}>
           <Box m={10} style={{ fontSize: "20px" }}>

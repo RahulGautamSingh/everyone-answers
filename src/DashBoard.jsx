@@ -218,6 +218,7 @@ export default function Dashboard() {
           listRef.onSnapshot((snapshot) => {
             let arr = [];
             snapshot.forEach((doc) => {
+              console.log(doc.data())
               arr.push([doc.id, doc.data().answer]);
             });
             arr.sort(function (a, b) {
@@ -379,7 +380,11 @@ export default function Dashboard() {
                       >
                         {elem[0]}
                       </p>
-                      <Box className={classes.displayBox}>{elem[1]}</Box>
+                      <Box className={classes.displayBox} style={{lineHeight:1}}>{
+                       elem[1].split("\n").map(ele=>{
+                         return <p style={{padding:0,margin:0}}>{ele}</p>
+                       })
+                      }</Box>
                     </Box>
                   );
                 })}
