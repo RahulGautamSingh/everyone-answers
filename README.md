@@ -14,9 +14,11 @@
     <li>Firebase login with Google authentication</li>
     <li>Here is a <a href="https://cocky-almeida-3605d7.netlify.app">link<a/> to the teacher's dashboard for you to try it.</li>
     </ul>
-    <p>Everyone Answers Login Page</p>
+    <p>Login Page</p>
    <img src="https://user-images.githubusercontent.com/76607510/127610893-c9c63767-7892-4419-9494-056345c4239c.png" alt="everyoneAnswers"/>
-    <p>Everyone Answers Student Page</p>
+<p>Teacher's Dashboard</p>
+<img src="https://user-images.githubusercontent.com/76607510/127610804-59f571e4-3fcc-4ac5-adc1-43882a058e9a.png" alt="everyoneAnswers"/>
+    <p>Student's View</p>
      <img src="https://user-images.githubusercontent.com/76607510/127610917-d2434aa3-52f7-4223-b772-7b515d2ebf9c.png" alt="everyoneAnswers"/>
   </div>
     <div>
