@@ -1,6 +1,4 @@
-<h3 align="left">Everyone Answers(Firebase)</h3>
-     <img src="https://user-images.githubusercontent.com/76607510/127610804-59f571e4-3fcc-4ac5-adc1-43882a058e9a.png" alt="everyoneAnswers"/>
-    <a href="#">GitHub Repo</a>
+<h3 align="left">Everyone Answers</h3>
 
 <p>It is an app created to help teachers get instant response from students in a live online class. Teacher can create a session, add students and can share a unique link with students. Students can then put answers in a textarea and it appears on the teacher's dashboard real time.</p>
 
